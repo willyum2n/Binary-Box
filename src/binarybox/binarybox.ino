@@ -25,7 +25,86 @@ LiquidCrystal_I2C lcd(0x27, 16, 2); // set the LCD address to 0x27 for a 16 char
 #define SW_6 33 // 64's Place
 #define SW_7 32 // 128's Place
 
-byte swValue = 0; // This is the variable that holds all the switch positions between loop iterations
+byte swValue = 4; // This is the variable that holds all the switch positions between loop iterations
+
+void I2Cscan(TwoWire *wire = &Wire) {
+    // scan for i2c devices
+    byte error, address;
+    int nDevices;
+
+    Serial.print("Scanning for I2C devices (pointer=...");
+    Serial.print((long)wire);
+    
+    nDevices = 0;
+    for(address = 1; address < 127; address++ ) {
+        // The i2c_scanner uses the return value of
+        // the Write.endTransmisstion to see if
+        // a device did acknowledge to the address.
+        wire->beginTransmission(address);
+        error = wire->endTransmission();
+
+        if (error == 0) {
+            Serial.print("     - I2C device found at address 0x");
+            if (address<16) 
+                Serial.print("0");
+            Serial.print(address,HEX);
+            Serial.println("  !");
+
+            nDevices++;
+        } else if (error==4) {
+            Serial.print("     - Unknown error at address 0x");
+            if (address<16)
+                Serial.print("0");
+    
+            Serial.println(address,HEX);
+        }    
+    }
+    if (nDevices == 0)
+        Serial.println("     - No I2C devices found\n");
+    else
+        Serial.println("     - done\n");
+
+}
+
+String btos(byte var) {
+  String buffer = "";
+  for (byte test = 0x80; test; test >>= 1) {
+    buffer += (var  & test ? '1' : '0');
+  }
+  return buffer;
+}
+
+void updateDisplay(byte value) {
+  
+  /* LCD Display Graphical space - Here are two different ways to display the value on the LCD
+   * 1234567890123456
+   * ----------------
+   * dec: 255 hex: ff    
+   * binary: 11111111
+   * 
+   * 1234567890123456
+   * ----------------
+   * 255  0b377  0xff    
+   * binary: 11111111  
+   */
+
+    char buff[9];
+
+    lcd.setCursor(0, 0); // set the cursor to column 0, line 0
+    lcd.print(value, DEC);
+
+    lcd.setCursor(5,0);
+    sprintf(buff, "0b%03o", value);
+    lcd.print(buff);
+
+    lcd.setCursor(12,0);
+    sprintf(buff, "0x%02x", value);
+    lcd.print(buff);
+
+    lcd.setCursor(0,1);
+    lcd.print("binary: " + btos(value));        
+}
+
 
 void setup() {
     Serial.begin(115200);
@@ -71,80 +150,13 @@ void loop() {
     currentValue = (!digitalRead(SW_6) & 0x40) || currentValue;
     currentValue = (!digitalRead(SW_7) & 0x80) || currentValue;
 
+    Serial.print("currentValue=");
+    Serial.println(currentValue);
+    
     // Check if the values have changed
     if (currentValue != swValue) {
         swValue = currentValue;
         updateDisplay(swValue);
     }
-}
 
-void I2Cscan(TwoWire *wire = &Wire) {
-    // scan for i2c devices
-    byte error, address;
-    int nDevices;
-
-    Serial.print("Scanning for I2C devices (pointer=...");
-    Serial.print((long)wire);
-    
-    nDevices = 0;
-    for(address = 1; address < 127; address++ ) {
-        // The i2c_scanner uses the return value of
-        // the Write.endTransmisstion to see if
-        // a device did acknowledge to the address.
-        wire->beginTransmission(address);
-        error = wire->endTransmission();
-
-        if (error == 0) {
-            Serial.print("     - I2C device found at address 0x");
-            if (address<16) 
-                Serial.print("0");
-            Serial.print(address,HEX);
-            Serial.println("  !");
-
-            nDevices++;
-        } else if (error==4) {
-            Serial.print("     - Unknown error at address 0x");
-            if (address<16)
-                Serial.print("0");
-    
-            Serial.println(address,HEX);
-        }    
-    }
-    if (nDevices == 0)
-        Serial.println("     - No I2C devices found\n");
-    else
-        Serial.println("     - done\n");
-
-}
-
-void updateDisplay(byte value) {
-  
-  /* LCD Display Graphical space - Here are two different ways to display the value on the LCD
-   * 1234567890123456
-   * ----------------
-   * dec: 255 hex: ff    
-   * binary: 11111111
-   * 
-   * 1234567890123456
-   * ----------------
-   * 255  0b377  0xff    
-   * binary: 11111111  
-   */
-
-//    String binStr = String(value, BIN);
-//    String octStr = String(value, OCT);
-//    String decStr = String(value, DEC);
-//    String hexStr = String(value, HEX);
-
-    lcd.setCursor(0, 0); // set the cursor to column 0, line 0
-    lcd.print(value, DEC);
-
-    lcd.setCursor(0,5);
-    lcd.print("0b" + String(value, OCT));
-
-    lcd.setCursor(0,12);
-    lcd.print("0x" + String(value, HEX));
-
-    lcd.setCursor(1,0);
-    lcd.print("binary: " + String(value, BIN));        
 }

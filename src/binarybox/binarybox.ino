@@ -35,14 +35,16 @@ LiquidCrystal_I2C lcd(0x27, 16, 2);   /**< set the LCD address to 0x27 for a 16 
  * All 8 switches have to be wired to our Microcontroller (MCU), so here we are defining the pins that
  * we will be wiring the switches to
  */
-#define SW_0 13 // 1's Place
-#define SW_1 12 // 2's Place
-#define SW_2 14 // 4's Place
-#define SW_3 27 // 8's Place
-#define SW_4 26 // 16's Place
-#define SW_5 25 // 32's Place
-#define SW_6 33 // 64's Place
-#define SW_7 32 // 128's Place
+
+#define SW_0 32 // 128's Place
+#define SW_1 33 // 64's Place
+#define SW_2 25 // 32's Place
+#define SW_3 26 // 16's Place
+#define SW_4 27 // 8's Place
+#define SW_5 14 // 4's Place
+#define SW_6 12 // 2's Place
+#define SW_7 13 // 1's Place
+
 
 // We are going to need to keep track of "value" that all 8 switches are making over time. So we
 // will store the value of the switches into a variable
@@ -139,6 +141,8 @@ void updateDisplay(byte value) {
      */ 
     char buff[9];   
 
+    lcd.setCursor(0, 0);    // set the cursor to column 0, line 0
+    lcd.print("   ");       // ensures old value is overwritten with spaces
     lcd.setCursor(0, 0);    // set the cursor to column 0, line 0
     lcd.print(value, DEC);  // No special handling needs to be done with the decimal value. Just print it to the display in DEC format
 
